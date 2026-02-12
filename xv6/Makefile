@@ -203,6 +203,7 @@ xv6.pdf: $(PRINT)
 	./runoff
 	ls -l xv6.pdf
 
+
 print: xv6.pdf
 
 # run in emulators
