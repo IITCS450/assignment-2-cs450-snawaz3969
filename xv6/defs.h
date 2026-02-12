@@ -119,7 +119,9 @@ void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
+int             setpriority(int, int);
 void            yield(void);
+
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -155,6 +157,7 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
+int             sys_setpriority(void);
 
 // timer.c
 void            timerinit(void);

@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 10; //Added code
 
   release(&ptable.lock);
 
@@ -199,6 +200,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->priority = curproc->priority;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -327,18 +329,28 @@ scheduler(void)
   c->proc = 0;
   
   for(;;){
+
+    struct proc *highp;
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    highp = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
+      if(highp == 0 || p->priority > highp->priority){
+        highp = p;
+      }
+    }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+    if(highp != 0){
+      p = highp;
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -531,4 +543,26 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int
+setpriority(int pid, int prio)
+{
+  struct proc *p;
+  int found = 0;
+
+  if (prio < 0 || prio > 2)
+    return -1;
+
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->pid == pid && p->state != UNUSED) {
+      p->priority = prio;
+      found = 1;
+      break;
+    }
+  }
+  release(&ptable.lock);
+
+  return found ? 0 : -1;
 }
